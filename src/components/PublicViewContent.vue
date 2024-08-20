@@ -171,6 +171,7 @@ h2 {
 @media (max-width: 768px) {
   .public-view-content {
     margin: 0;
+    
   }
 
   h2 {

@@ -3,7 +3,7 @@
     <button class="back-button" @click="goBack">
       <i class="fas fa-arrow-left"></i> Voltar
     </button>
-    <h2>Login</h2>
+    <h2>Acesso do Administrador</h2>
     <form @submit.prevent="login">
       <div class="input-group">
         <label for="email">Email:</label>
