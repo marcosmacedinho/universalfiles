@@ -198,7 +198,7 @@ h2 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 150px; /* Ajuste o valor conforme necessário */
+    max-width: 180px; /* Ajuste o valor conforme necessário */
   }
 
   .file-item a {
