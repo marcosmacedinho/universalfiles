@@ -194,8 +194,11 @@ h2 {
   }
 
   .file-item span {
-    margin-bottom: 5px;
-    font-size: 1rem;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px; /* Ajuste o valor conforme necessário */
   }
 
   .file-item a {
