@@ -95,6 +95,7 @@ export default {
 
         uploadMessage.value = "Upload realizado com sucesso!";
       } catch (error) {
+        console.error("Detalhes do erro:", error); // Adicione esta linha para mais detalhes
         uploadMessage.value = `Erro ao fazer upload: ${error.message}`;
       }
     };
