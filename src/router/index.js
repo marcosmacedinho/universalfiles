@@ -14,9 +14,10 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes,
-});
+    history: createWebHistory('/basepath/'), // ajuste para o caminho base necessário
+    routes,
+  });
+  
 
 router.beforeEach((to, from, next) => {
   const auth = getAuth();
