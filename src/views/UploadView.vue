@@ -12,7 +12,7 @@
       <div class="input-group">
         <label for="category">Categoria:</label>
         <select v-model="category" id="category" required>
-          <option value="" disabled selected>Selecione uma categoria</option>
+          <option value="" disabled>Selecione uma categoria</option>
           <option value="Documentos">Documentos</option>
           <option value="Imagens">Imagens</option>
           <option value="Vídeos">Vídeos</option>
@@ -32,7 +32,7 @@
 
 <script>
 import { ref } from "vue";
-import { storage, db } from "../firebase.js";
+import { storage, db } from "../firebase";
 import {
   ref as storageRef,
   uploadBytes,
@@ -40,14 +40,13 @@ import {
 } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { useRouter } from "vue-router";
-import { getAuth } from "firebase/auth";
 
 export default {
   name: "UploadView",
   setup() {
     const file = ref(null);
     const category = ref("");
-    const description = ref(""); // Adicione esta linha
+    const description = ref("");
     const uploadMessage = ref("");
     const router = useRouter();
 
@@ -69,15 +68,6 @@ export default {
         return;
       }
 
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        uploadMessage.value =
-          "Você precisa estar autenticado para fazer o upload.";
-        return;
-      }
-
       try {
         const fileRef = storageRef(
           storage,
@@ -86,16 +76,18 @@ export default {
         await uploadBytes(fileRef, file.value);
         const url = await getDownloadURL(fileRef);
 
+        // Adicione o documento ao Firestore
         await addDoc(collection(db, "files"), {
           name: file.value.name,
           url,
           category: category.value,
           description: description.value,
+          createdAt: new Date(), // Adicione a data de criação, se necessário
         });
 
         uploadMessage.value = "Upload realizado com sucesso!";
       } catch (error) {
-        console.error("Detalhes do erro:", error); // Adicione esta linha para mais detalhes
+        console.error("Erro ao fazer upload: ", error); // Melhore o log de erro
         uploadMessage.value = `Erro ao fazer upload: ${error.message}`;
       }
     };
@@ -110,7 +102,7 @@ export default {
       uploadMessage,
       goBack,
       category,
-      description, // Adicione esta linha
+      description,
     };
   },
 };

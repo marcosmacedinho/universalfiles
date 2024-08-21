@@ -8,7 +8,7 @@
           type="text"
           id="search"
           v-model="searchQuery"
-          placeholder="Pesquisar por nome do arquivo..."
+          placeholder="Pesquisar por nome do arquivo ou descrição..."
         />
       </div>
       <div class="filter-item">
@@ -25,10 +25,23 @@
     </div>
     <ul class="file-list">
       <li v-for="file in filteredFiles" :key="file.id" class="file-item">
-        <span>{{ file.name }}</span>
-        <a :href="file.url" download>
-          <i class="fas fa-download"></i>
-        </a>
+        <div class="file-info">
+          <span>{{ file.name }}</span>
+          <div class="file-actions">
+            <a :href="file.url" download>
+              <i class="fas fa-download"></i>
+            </a>
+            <i
+              :class="
+                file.isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'
+              "
+              @click="toggleDescription(file.id)"
+            ></i>
+          </div>
+        </div>
+        <div v-if="file.isExpanded" class="file-description">
+          <p>{{ file.description }}</p>
+        </div>
       </li>
     </ul>
   </div>
@@ -52,7 +65,15 @@ export default {
       files.value = querySnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
+        isExpanded: false, // Inicialmente, a descrição está contraída
       }));
+    };
+
+    const toggleDescription = (fileId) => {
+      const file = files.value.find((f) => f.id === fileId);
+      if (file) {
+        file.isExpanded = !file.isExpanded;
+      }
     };
 
     const filteredFiles = computed(() => {
@@ -63,8 +84,11 @@ export default {
         );
       }
       if (searchQuery.value) {
-        result = result.filter((file) =>
-          file.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const query = searchQuery.value.toLowerCase();
+        result = result.filter(
+          (file) =>
+            file.name.toLowerCase().includes(query) ||
+            file.description.toLowerCase().includes(query) // Filtrar também pela descrição
         );
       }
       return result;
@@ -77,6 +101,7 @@ export default {
       selectedCategory,
       searchQuery,
       filteredFiles,
+      toggleDescription,
     };
   },
 };
@@ -136,8 +161,7 @@ h2 {
 
 .file-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 10px;
   padding: 10px;
   border-bottom: 1px solid #ddd;
@@ -150,28 +174,38 @@ h2 {
   background-color: #e6e6e6;
 }
 
-.file-item span {
-  flex-grow: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.file-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.file-item a {
-  text-decoration: none;
-  color: #42b983;
-  font-size: 1.2rem;
-  transition: color 0.3s ease;
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
-.file-item a:hover {
-  color: #336699;
+.file-actions i,
+.file-actions a {
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.file-description {
+  padding: 10px 0;
+  margin-top: 5px;
+  border-top: 1px solid #ddd;
+}
+
+.file-description p {
+  margin: 0 0 10px;
+  color: #666;
 }
 
 @media (max-width: 768px) {
   .public-view-content {
     margin: 0;
-    
   }
 
   h2 {
@@ -190,8 +224,11 @@ h2 {
 
   .file-item {
     font-size: 0.9rem;
-    align-items: flex-start;
     text-align: left;
+  }
+
+  .file-info i {
+    font-size: 1.2rem;
   }
 
   .file-item span {
@@ -202,7 +239,7 @@ h2 {
     max-width: 180px; /* Ajuste o valor conforme necessário */
   }
 
-  .file-item a {
+  .file-description a {
     font-size: 1rem;
   }
 }
