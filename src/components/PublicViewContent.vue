@@ -1,49 +1,55 @@
 <template>
   <div class="public-view-content">
     <h2>Arquivos Disponíveis para Download</h2>
-    <div class="filter-container">
-      <div class="filter-item">
-        <label for="search">Pesquisar:</label>
-        <input
-          type="text"
-          id="search"
-          v-model="searchQuery"
-          placeholder="Pesquisar por nome do arquivo ou descrição..."
-        />
-      </div>
-      <div class="filter-item">
-        <label for="categoryFilter">Filtrar:</label>
-        <select v-model="selectedCategory" id="categoryFilter">
-          <option value="">Todas</option>
-          <option value="Documentos">Documentos</option>
-          <option value="Imagens">Imagens</option>
-          <option value="Vídeos">Vídeos</option>
-          <option value="Áudio">Áudio</option>
-          <option value="Outros">Outros</option>
-        </select>
-      </div>
+    <div v-if="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Carregando arquivos...</p>
     </div>
-    <ul class="file-list">
-      <li v-for="file in filteredFiles" :key="file.id" class="file-item">
-        <div class="file-info">
-          <span>{{ file.name }}</span>
-          <div class="file-actions">
-            <a :href="file.url" download>
-              <i class="fas fa-download"></i>
-            </a>
-            <i
-              :class="
-                file.isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'
-              "
-              @click="toggleDescription(file.id)"
-            ></i>
+    <div v-else>
+      <div class="filter-container">
+        <div class="filter-item">
+          <label for="search">Pesquisar:</label>
+          <input
+            type="text"
+            id="search"
+            v-model="searchQuery"
+            placeholder="Pesquisar por nome do arquivo ou descrição..."
+          />
+        </div>
+        <div class="filter-item">
+          <label for="categoryFilter">Filtrar:</label>
+          <select v-model="selectedCategory" id="categoryFilter">
+            <option value="">Todas</option>
+            <option value="Documentos">Documentos</option>
+            <option value="Imagens">Imagens</option>
+            <option value="Vídeos">Vídeos</option>
+            <option value="Áudio">Áudio</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+      </div>
+      <ul class="file-list">
+        <li v-for="file in filteredFiles" :key="file.id" class="file-item">
+          <div class="file-info">
+            <span>{{ file.name }}</span>
+            <div class="file-actions">
+              <a :href="file.url" download>
+                <i class="fas fa-download"></i>
+              </a>
+              <i
+                :class="
+                  file.isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down'
+                "
+                @click="toggleDescription(file.id)"
+              ></i>
+            </div>
           </div>
-        </div>
-        <div v-if="file.isExpanded" class="file-description">
-          <p>{{ file.description }}</p>
-        </div>
-      </li>
-    </ul>
+          <div v-if="file.isExpanded" class="file-description">
+            <p>{{ file.description }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -56,6 +62,7 @@ export default {
   name: "PublicViewContent",
   setup() {
     const files = ref([]);
+    const loading = ref(true); // Estado de loading
     const selectedCategory = ref("");
     const searchQuery = ref("");
     const filesCollection = collection(db, "files");
@@ -67,6 +74,7 @@ export default {
         id: doc.id,
         isExpanded: false, // Inicialmente, a descrição está contraída
       }));
+      loading.value = false; // Desativar o loading após o carregamento
     };
 
     const toggleDescription = (fileId) => {
@@ -98,6 +106,7 @@ export default {
 
     return {
       files,
+      loading,
       selectedCategory,
       searchQuery,
       filteredFiles,
@@ -130,6 +139,9 @@ h2 {
 .filter-container {
   margin-bottom: 20px;
   padding: 10px;
+  background-color: #ccc;
+  padding: 15px;
+  border-radius: 10px;
 }
 
 .filter-item {
@@ -138,7 +150,7 @@ h2 {
 
 .filter-item label {
   font-weight: bold;
-  color: #333;
+  color: #000000;
   display: block;
   margin-bottom: 5px;
 }
@@ -151,6 +163,8 @@ h2 {
   font-size: 1rem;
   width: 100%;
   box-sizing: border-box;
+  border-radius: 10px;
+  outline: 0.5px #333 solid;
 }
 
 .file-list {
@@ -201,6 +215,34 @@ h2 {
 .file-description p {
   margin: 0 0 10px;
   color: #666;
+}
+
+/* Estilos para o loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ccc;
+  border-top: 5px solid #1abc9c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
