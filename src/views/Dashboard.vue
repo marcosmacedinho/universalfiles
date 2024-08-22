@@ -10,12 +10,22 @@
         <template v-if="editFileId === file.id">
           <input 
             v-model="editFileName" 
-            @keyup.enter="updateFileName(file.id, file.url)" 
-            @blur="cancelEdit" 
             class="edit-input" 
             type="text" 
           />
-          <button @click="updateFileName(file.id, file.url)">
+          <select v-model="editCategory">
+            <option value="Documentos">Documentos</option>
+            <option value="Imagens">Imagens</option>
+            <option value="Vídeos">Vídeos</option>
+            <option value="Áudio">Áudio</option>
+            <option value="Outros">Outros</option>
+          </select>
+          <input 
+            v-model="editDescription" 
+            class="edit-input" 
+            type="text" 
+          />
+          <button @click="updateFileDetails(file.id)">
             <i class="fas fa-check"></i>
           </button>
           <button @click="cancelEdit">
@@ -23,9 +33,9 @@
           </button>
         </template>
         <template v-else>
-          <span>{{ file.name }}</span>
+          <span>{{ file.name }} - {{ file.category }} - {{ file.description }}</span>
           <div class="file-actions">
-            <button @click="startEdit(file.id, file.name)">
+            <button @click="startEdit(file)">
               <i class="fas fa-pencil-alt"></i>
             </button>
             <a :href="file.url" download>
@@ -44,7 +54,7 @@
 <script>
 import { ref, onMounted } from "vue";
 import { db, storage } from "../firebase.js";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref as storageRef, getDownloadURL, deleteObject } from "firebase/storage";
 import { collection, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { useRouter } from 'vue-router';
 
@@ -54,6 +64,8 @@ export default {
     const filesCollection = collection(db, "files");
     const editFileId = ref(null);
     const editFileName = ref("");
+    const editCategory = ref("");
+    const editDescription = ref("");
     const router = useRouter();
 
     const fetchFiles = async () => {
@@ -70,58 +82,43 @@ export default {
 
     const deleteFile = async (id, fileUrl) => {
       try {
-        // Extract file path from URL and delete from Firebase Storage
-        const storagePath = decodeURIComponent(fileUrl.split("/o/")[1].split("?")[0]); // Extract file path
+        const storagePath = decodeURIComponent(fileUrl.split("/o/")[1].split("?")[0]); 
         const fileRef = storageRef(storage, storagePath);
         await deleteObject(fileRef);
-
-        // Remove file metadata from Firestore
         const fileDoc = doc(db, "files", id);
         await deleteDoc(fileDoc);
-
-        // Refresh the file list
         await fetchFiles();
       } catch (error) {
         console.error("Error deleting file:", error);
       }
     };
 
-    const startEdit = (id, name) => {
-      editFileId.value = id;
-      editFileName.value = name;
+    const startEdit = (file) => {
+      editFileId.value = file.id;
+      editFileName.value = file.name;
+      editCategory.value = file.category;
+      editDescription.value = file.description;
     };
 
     const cancelEdit = () => {
       editFileId.value = null;
       editFileName.value = "";
+      editCategory.value = "";
+      editDescription.value = "";
     };
 
-    const updateFileName = async (id, oldFileUrl) => {
+    const updateFileDetails = async (id) => {
       try {
-        // Extract file path from URL and prepare new file path
-        const oldStoragePath = decodeURIComponent(oldFileUrl.split("/o/")[1].split("?")[0]); // Extract old file path
-        const newStoragePath = oldStoragePath.replace(/[^\/]*$/, `${editFileName.value}`); // Replace file name in path
-
-        // Copy file to new path
-        const oldFileRef = storageRef(storage, oldStoragePath);
-        const newFileRef = storageRef(storage, newStoragePath);
-        const oldFileSnapshot = await getDownloadURL(oldFileRef);
-        const fileBlob = await fetch(oldFileSnapshot).then(res => res.blob());
-        await uploadBytes(newFileRef, fileBlob);
-
-        // Delete old file
-        await deleteObject(oldFileRef);
-
-        // Update Firestore document with new file name and URL
-        const newFileUrl = await getDownloadURL(newFileRef);
         const fileDoc = doc(db, "files", id);
-        await updateDoc(fileDoc, { name: editFileName.value, url: newFileUrl });
-
-        // Refresh the file list
+        await updateDoc(fileDoc, { 
+          name: editFileName.value,
+          category: editCategory.value,
+          description: editDescription.value 
+        });
         cancelEdit();
         await fetchFiles();
       } catch (error) {
-        console.error("Error updating file name:", error);
+        console.error("Error updating file details:", error);
       }
     };
 
@@ -136,10 +133,12 @@ export default {
       deleteFile,
       startEdit,
       cancelEdit,
-      updateFileName,
+      updateFileDetails,
       goBack,
       editFileId,
       editFileName,
+      editCategory,
+      editDescription,
     };
   },
 };

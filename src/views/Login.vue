@@ -40,7 +40,7 @@ export default {
           router.currentRoute.value.query.redirect || "/public";
         router.push(redirectTo);
       } catch (error) {
-        errorMessage.value = "Erro ao fazer login: " + error.message;
+        errorMessage.value = "Erro ao fazer login, verifique suas credenciais!";
       }
     };
 
@@ -118,7 +118,6 @@ button {
   font-size: 1rem;
   transition: background-color 0.3s ease;
 }
-
 
 .error-message {
   color: red;
